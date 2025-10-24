@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Royal Casino - Премиум азартные игры</title>
     <style>
-        /* Основные стили */
         * {
             margin: 0;
             padding: 0;
@@ -36,11 +35,6 @@
             justify-content: space-between;
             align-items: center;
             padding: 0 20px;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
         }
         
         .logo h1 {
@@ -616,7 +610,7 @@
             }
         });
 
-        // Обработка формы регистрации
+        // Обработка формы регистрации (сохранение в localStorage)
         document.getElementById('registrationForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -624,7 +618,6 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
-            const messageDiv = document.getElementById('message');
             
             // Проверка совпадения паролей
             if (password !== confirmPassword) {
@@ -632,29 +625,54 @@
                 return;
             }
             
-            // Отправка данных на сервер
-            const formData = new FormData();
-            formData.append('username', username);
-            formData.append('email', email);
-            formData.append('password', password);
+            // Проверка валидности email
+            if (!validateEmail(email)) {
+                showMessage('Некорректный email адрес!', 'error');
+                return;
+            }
             
-            fetch('register.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.text())
-            .then(data => {
-                if (data === 'success') {
-                    showMessage('Регистрация успешна! Добро пожаловать в казино!', 'success');
-                    document.getElementById('registrationForm').reset();
-                } else {
-                    showMessage('Ошибка регистрации: ' + data, 'error');
+            // Сохраняем данные в localStorage
+            try {
+                const userData = {
+                    username: username,
+                    email: email,
+                    password: btoa(password), // Простое кодирование (не безопасно для продакшена)
+                    registrationDate: new Date().toLocaleString()
+                };
+                
+                // Получаем существующих пользователей или создаем новый массив
+                const existingUsers = JSON.parse(localStorage.getItem('casinoUsers') || '[]');
+                
+                // Проверяем, нет ли уже пользователя с таким email
+                const userExists = existingUsers.some(user => user.email === email);
+                if (userExists) {
+                    showMessage('Пользователь с таким email уже зарегистрирован!', 'error');
+                    return;
                 }
-            })
-            .catch(error => {
-                showMessage('Ошибка соединения: ' + error, 'error');
-            });
+                
+                // Добавляем нового пользователя
+                existingUsers.push(userData);
+                
+                // Сохраняем обратно в localStorage
+                localStorage.setItem('casinoUsers', JSON.stringify(existingUsers));
+                
+                showMessage('Регистрация успешна! Добро пожаловать в казино!', 'success');
+                document.getElementById('registrationForm').reset();
+                
+                // Скрываем форму через 3 секунды
+                setTimeout(() => {
+                    document.getElementById('registrationSection').style.display = 'none';
+                }, 3000);
+                
+            } catch (error) {
+                showMessage('Ошибка при сохранении данных: ' + error, 'error');
+            }
         });
+        
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
         
         function showMessage(text, type) {
             const messageDiv = document.getElementById('message');
@@ -662,7 +680,6 @@
             messageDiv.className = 'message ' + type;
             messageDiv.style.display = 'block';
             
-            // Скрыть сообщение через 5 секунд
             setTimeout(() => {
                 messageDiv.style.display = 'none';
             }, 5000);
