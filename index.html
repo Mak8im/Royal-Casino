@@ -166,6 +166,77 @@
             border-radius: 30px;
         }
         
+        /* Форма регистрации */
+        .registration-section {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .registration-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffd700;
+            font-size: 28px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+        
+        .btn-submit {
+            background: linear-gradient(to right, #ffd700, #ff9900);
+            color: #000;
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            color: #0f0;
+        }
+        
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.5);
+            color: #f00;
+        }
+        
         /* Игры */
         .games-section {
             max-width: 1200px;
@@ -369,8 +440,8 @@
             </nav>
             <div class="user-actions">
                 <div class="balance">Баланс: <span>10 000 ₽</span></div>
-                <button class="btn btn-login">Войти</button>
-                <button class="btn btn-register">Регистрация</button>
+                <button class="btn btn-login" id="loginBtn">Войти</button>
+                <button class="btn btn-register" id="registerBtn">Регистрация</button>
             </div>
         </div>
     </header>
@@ -382,6 +453,31 @@
             <p>Ощутите атмосферу настоящего казино с нашими премиум играми. Более 100 игр, щедрые бонусы и круглосуточная поддержка.</p>
             <button class="btn btn-hero">Играть сейчас</button>
         </div>
+    </section>
+
+    <!-- Форма регистрации -->
+    <section class="registration-section" id="registrationSection" style="display: none;">
+        <h2>Регистрация в казино</h2>
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="username">Имя пользователя:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Подтвердите пароль:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+            </div>
+            <button type="submit" class="btn btn-submit">Зарегистрироваться</button>
+        </form>
+        <div id="message" class="message"></div>
     </section>
 
     <!-- Раздел с играми -->
@@ -509,6 +605,69 @@
     </footer>
 
     <script>
+        // Показать/скрыть форму регистрации
+        document.getElementById('registerBtn').addEventListener('click', function() {
+            const registrationSection = document.getElementById('registrationSection');
+            if (registrationSection.style.display === 'none') {
+                registrationSection.style.display = 'block';
+                registrationSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                registrationSection.style.display = 'none';
+            }
+        });
+
+        // Обработка формы регистрации
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const messageDiv = document.getElementById('message');
+            
+            // Проверка совпадения паролей
+            if (password !== confirmPassword) {
+                showMessage('Пароли не совпадают!', 'error');
+                return;
+            }
+            
+            // Отправка данных на сервер
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('email', email);
+            formData.append('password', password);
+            
+            fetch('register.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                if (data === 'success') {
+                    showMessage('Регистрация успешна! Добро пожаловать в казино!', 'success');
+                    document.getElementById('registrationForm').reset();
+                } else {
+                    showMessage('Ошибка регистрации: ' + data, 'error');
+                }
+            })
+            .catch(error => {
+                showMessage('Ошибка соединения: ' + error, 'error');
+            });
+        });
+        
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = 'message ' + type;
+            messageDiv.style.display = 'block';
+            
+            // Скрыть сообщение через 5 секунд
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
         // Простая анимация для кнопок
         document.querySelectorAll('.btn').forEach(button => {
             button.addEventListener('mouseenter', function() {
